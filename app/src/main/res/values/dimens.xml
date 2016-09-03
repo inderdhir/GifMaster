@@ -3,4 +3,17 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
+
+    <!-- Margins -->
+    <dimen name="default_margin">16dp</dimen>
+    <dimen name="default_margin_half">8dp</dimen>
+
+    <!-- Paddings -->
+    <dimen name="default_padding">16dp</dimen>
+
+    <!-- Text -->
+    <dimen name="default_text_size">16sp</dimen>
+
+    <dimen name="gif_item_height">300dp</dimen>
+    <dimen name="gif_item_margin_bottom">5dp</dimen>
 </resources>

@@ -5,3 +5,7 @@
 .DS_Store
 /build
 /captures
+libs/
+src/main/assets/fonts/
+src/main/res/drawable/
+src/main/res/menu/

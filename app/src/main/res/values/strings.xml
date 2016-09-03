@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">GifMaster</string>
     <string name="action_settings">Settings</string>
+
+    <!-- Content Descriptions -->
+    <string name="gif_item">GIF</string>
+
 </resources>

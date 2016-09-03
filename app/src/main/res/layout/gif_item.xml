@@ -1,0 +1,14 @@
+<android.support.v7.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/card_view"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/gif_item_height"
+    android:layout_marginBottom="@dimen/gif_item_margin_bottom">
+
+    <com.facebook.drawee.view.SimpleDraweeView
+        android:id="@+id/gif_image_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
+</android.support.v7.widget.CardView>
