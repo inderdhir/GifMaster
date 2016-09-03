@@ -10,5 +10,7 @@
     <color name="divider">#BDBDBD</color>
 
     <color name="black">#000000</color>
+    <color name="gif_placeholder_gray">#CCCCCC</color>
+    <color name="gif_error_red">#ff9494</color>
 
 </resources>

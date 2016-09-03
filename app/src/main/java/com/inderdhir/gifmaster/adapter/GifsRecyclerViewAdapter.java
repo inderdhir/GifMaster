@@ -54,6 +54,8 @@ public class GifsRecyclerViewAdapter extends RecyclerView.Adapter<GifsRecyclerVi
             String url = gifItem.getUrl().replaceAll("\\/", "/");
             DraweeController controller = Fresco.newDraweeControllerBuilder()
                     .setUri(Uri.parse(url))
+                    .setTapToRetryEnabled(true)
+                    .setRetainImageOnFailure(true)
                     .setAutoPlayAnimations(true)
                     .build();
             mGifImageView.setController(controller);
