@@ -13,31 +13,31 @@
         android:visibility="gone"
         />
 
-    <android.support.v4.widget.SwipeRefreshLayout
-        android:id="@+id/swipe_refresh_layout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                  xmlns:tools="http://schemas.android.com/tools"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:background="@color/black"
+                  android:orientation="vertical"
+                  tools:context=".ui.fragment.MainFragment"
+                  tools:showIn="@layout/activity_main">
 
-        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                      xmlns:tools="http://schemas.android.com/tools"
-                      android:layout_width="match_parent"
-                      android:layout_height="match_parent"
-                      android:background="@color/black"
-                      android:orientation="vertical"
-                      tools:context=".ui.fragment.MainFragment"
-                      tools:showIn="@layout/activity_main">
+        <EditText
+            android:id="@+id/search_gifs_edit_text"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/search_gifs_edit_text_height"
+            android:background="@color/primary_light"
+            android:freezesText="true"
+            android:hint="@string/search_for_gifs"
+            android:imeOptions="actionSearch"
+            android:inputType="text|textAutoComplete"
+            android:padding="@dimen/default_padding"
+            android:textSize="@dimen/default_text_size"/>
 
-            <EditText
-                android:id="@+id/search_gifs_edit_text"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/search_gifs_edit_text_height"
-                android:background="@color/primary_light"
-                android:freezesText="true"
-                android:hint="@string/search_for_gifs"
-                android:imeOptions="actionSearch"
-                android:inputType="text|textAutoComplete"
-                android:padding="@dimen/default_padding"
-                android:textSize="@dimen/default_text_size"/>
+        <android.support.v4.widget.SwipeRefreshLayout
+            android:id="@+id/swipe_refresh_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/gifs_recycler_view"
@@ -46,8 +46,8 @@
                 android:layout_margin="@dimen/default_margin"
                 android:scrollbars="vertical"/>
 
-        </LinearLayout>
+        </android.support.v4.widget.SwipeRefreshLayout>
 
-    </android.support.v4.widget.SwipeRefreshLayout>
+    </LinearLayout>
 
 </LinearLayout>

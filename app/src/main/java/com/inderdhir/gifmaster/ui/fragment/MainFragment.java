@@ -187,6 +187,7 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
                            final Response<List<GifItem>> response) {
         if (mNetworkErrorLayout.getVisibility() != View.GONE) {
             mNetworkErrorLayout.setVisibility(View.GONE);
+            mSearchGifsEditTextView.setVisibility(View.VISIBLE);
             mSwipeRefreshLayout.setVisibility(View.VISIBLE);
         }
 
@@ -222,6 +223,7 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         mNetworkErrorGifView.setController(controller);
 
         mNetworkErrorLayout.setVisibility(View.VISIBLE);
+        mSearchGifsEditTextView.setVisibility(View.GONE);
         mSwipeRefreshLayout.setVisibility(View.GONE);
 
         isLoadingItems = false;
