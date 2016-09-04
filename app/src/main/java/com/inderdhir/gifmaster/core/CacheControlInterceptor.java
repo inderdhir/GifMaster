@@ -7,6 +7,7 @@ import com.inderdhir.gifmaster.util.Utils;
 import java.io.IOException;
 
 import okhttp3.Interceptor;
+import okhttp3.Request;
 import okhttp3.Response;
 
 
@@ -23,16 +24,17 @@ public class CacheControlInterceptor implements Interceptor {
 
     @Override
     public Response intercept(final Chain chain) throws IOException {
-        Response originalResponse = chain.proceed(chain.request());
+        Request original = chain.request();
         if (Utils.isNetworkAvailable(mContext)) {
-            return originalResponse.newBuilder()
+            original = original.newBuilder()
                     .addHeader("Cache-Control", "public, max-age=" + CACHE_MAX_AGE_IN_SECONDS)
                     .build();
         } else {
-            return originalResponse.newBuilder()
+            original = original.newBuilder()
                     .addHeader("Cache-Control", "public, only-if-cached, max-stale=" +
                             CACHE_MAX_STALE_IN_SECONDS)
                     .build();
         }
+        return chain.proceed(original);
     }
 }
