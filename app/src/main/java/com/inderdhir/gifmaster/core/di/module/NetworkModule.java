@@ -5,6 +5,7 @@ import android.content.res.AssetManager;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.inderdhir.gifmaster.BuildConfig;
+import com.inderdhir.gifmaster.core.CacheControlInterceptor;
 import com.inderdhir.gifmaster.core.GifDeserializer;
 import com.inderdhir.gifmaster.core.GifMasterApplication;
 import com.inderdhir.gifmaster.core.GiphyRetrofitService;
@@ -21,6 +22,7 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import okhttp3.Cache;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -33,6 +35,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 @Module
 public class NetworkModule {
 
+    @Inject
+    GifMasterApplication mApplication;
+
     private static final String DEBUG_PROPERTIES_FILENAME = "config.debug.properties";
     private static final String RELEASE_PROPERTIES_FILENAME = "config.release.properties";
 
@@ -40,8 +45,8 @@ public class NetworkModule {
     private static final String API_KEY = "api_key";
     private static final String BASE_URL = "base_url";
 
-    @Inject
-    GifMasterApplication mApplication;
+    private static final int OKHTTP_CACHE_SIZE = 10 * 1024 * 1024; // 10 MiB
+    private static final int OKHTTP_CACHE_AGE_SECONDS = 15;
 
     public NetworkModule() {
     }
@@ -54,10 +59,13 @@ public class NetworkModule {
 
     @Provides
     @Singleton
-    public OkHttpClient provideOkHttpClient(final Properties properties) {
+    public OkHttpClient provideOkHttpClient(final Properties properties,
+                                            final GifMasterApplication application) {
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
         if (BuildConfig.DEBUG) {
-            httpClient.addInterceptor(new HttpLoggingInterceptor());
+            HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
+            httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+            httpClient.addInterceptor(httpLoggingInterceptor);
         }
         httpClient.addInterceptor(new Interceptor() {
             @Override
@@ -67,13 +75,14 @@ public class NetworkModule {
                 HttpUrl url = originalHttpUrl.newBuilder()
                         .addQueryParameter(API_KEY, properties.getProperty(API_KEY))
                         .build();
-
                 Request.Builder requestBuilder = original.newBuilder()
                         .url(url);
                 Request request = requestBuilder.build();
                 return chain.proceed(request);
             }
         });
+        httpClient.addNetworkInterceptor(new CacheControlInterceptor(application)); // Caching
+        httpClient.cache(new Cache(application.getCacheDir(), OKHTTP_CACHE_SIZE));
         httpClient.connectTimeout(10, TimeUnit.SECONDS);
         httpClient.readTimeout(10, TimeUnit.SECONDS);
 

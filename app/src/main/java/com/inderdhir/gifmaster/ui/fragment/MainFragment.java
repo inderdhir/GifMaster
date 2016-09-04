@@ -185,49 +185,31 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     @Override
     public void onResponse(final Call<List<GifItem>> call,
                            final Response<List<GifItem>> response) {
-        if (mNetworkErrorLayout.getVisibility() != View.GONE) {
-            mNetworkErrorLayout.setVisibility(View.GONE);
-            mSearchGifsEditTextView.setVisibility(View.VISIBLE);
-            mSwipeRefreshLayout.setVisibility(View.VISIBLE);
-        }
+        if (response.isSuccessful()) {
+            if (mNetworkErrorLayout.getVisibility() != View.GONE) {
+                mNetworkErrorLayout.setVisibility(View.GONE);
+                mSearchGifsEditTextView.setVisibility(View.VISIBLE);
+                mSwipeRefreshLayout.setVisibility(View.VISIBLE);
+            }
 
-        if (isSearching) {
-            Utils.hideSoftKeyboard(getActivity(), rootView);
-        }
-        isLoadingItems = false;
-        mSwipeRefreshLayout.setRefreshing(false);
-        List<GifItem> gifItems = response.body();
-        if (gifItems != null && !gifItems.isEmpty()) {
-            mGifItemsList.addAll(gifItems);
-            adapter.notifyDataSetChanged();
+            if (isSearching) {
+                Utils.hideSoftKeyboard(getActivity(), rootView);
+            }
+            isLoadingItems = false;
+            mSwipeRefreshLayout.setRefreshing(false);
+            List<GifItem> gifItems = response.body();
+            if (gifItems != null && !gifItems.isEmpty()) {
+                mGifItemsList.addAll(gifItems);
+                adapter.notifyDataSetChanged();
+            }
+        } else {
+            showFailure();
         }
     }
 
     @Override
     public void onFailure(final Call<List<GifItem>> call, final Throwable t) {
-        // Show one of three GIFs randomly
-        @DrawableRes int imageResourceId = R.drawable.network_error_1;
-        switch (mRandom.nextInt(3)) {
-            case 1:
-                imageResourceId = R.drawable.network_error_2;
-                break;
-            case 2:
-                imageResourceId = R.drawable.network_error_3;
-                break;
-        }
-        ImageRequest imageRequest = ImageRequestBuilder.newBuilderWithResourceId(imageResourceId).build();
-        DraweeController controller = Fresco.newDraweeControllerBuilder()
-                .setUri(imageRequest.getSourceUri())
-                .setAutoPlayAnimations(true)
-                .build();
-        mNetworkErrorGifView.setController(controller);
-
-        mNetworkErrorLayout.setVisibility(View.VISIBLE);
-        mSearchGifsEditTextView.setVisibility(View.GONE);
-        mSwipeRefreshLayout.setVisibility(View.GONE);
-
-        isLoadingItems = false;
-        mSwipeRefreshLayout.setRefreshing(false);
+        showFailure();
     }
 
     @Override
@@ -273,6 +255,32 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         if (mConfigChanged) {
             mConfigChanged = false;
         }
+    }
+
+    private void showFailure() {
+        // Show one of three GIFs randomly
+        @DrawableRes int imageResourceId = R.drawable.network_error_1;
+        switch (mRandom.nextInt(3)) {
+            case 1:
+                imageResourceId = R.drawable.network_error_2;
+                break;
+            case 2:
+                imageResourceId = R.drawable.network_error_3;
+                break;
+        }
+        ImageRequest imageRequest = ImageRequestBuilder.newBuilderWithResourceId(imageResourceId).build();
+        DraweeController controller = Fresco.newDraweeControllerBuilder()
+                .setUri(imageRequest.getSourceUri())
+                .setAutoPlayAnimations(true)
+                .build();
+        mNetworkErrorGifView.setController(controller);
+
+        mNetworkErrorLayout.setVisibility(View.VISIBLE);
+        mSearchGifsEditTextView.setVisibility(View.GONE);
+        mSwipeRefreshLayout.setVisibility(View.GONE);
+
+        isLoadingItems = false;
+        mSwipeRefreshLayout.setRefreshing(false);
     }
 
 
