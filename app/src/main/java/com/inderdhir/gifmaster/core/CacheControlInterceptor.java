@@ -12,7 +12,7 @@ import okhttp3.Response;
 
 public class CacheControlInterceptor implements Interceptor {
 
-    private static final int CACHE_MAX_AGE_IN_SECONDS = 30;
+    private static final int CACHE_MAX_AGE_IN_SECONDS = 60;
     private static final int CACHE_MAX_STALE_IN_SECONDS = 900; // 15 mins
 
     private Context mContext;
