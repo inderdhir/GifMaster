@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -30,7 +31,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 @Module
-public class ApiModule {
+public class NetworkModule {
 
     private static final String DEBUG_PROPERTIES_FILENAME = "config.debug.properties";
     private static final String RELEASE_PROPERTIES_FILENAME = "config.release.properties";
@@ -42,7 +43,7 @@ public class ApiModule {
     @Inject
     GifMasterApplication mApplication;
 
-    public ApiModule() {
+    public NetworkModule() {
     }
 
     @Provides
@@ -73,6 +74,8 @@ public class ApiModule {
                 return chain.proceed(request);
             }
         });
+        httpClient.connectTimeout(10, TimeUnit.SECONDS);
+        httpClient.readTimeout(10, TimeUnit.SECONDS);
 
         return httpClient.build();
     }
