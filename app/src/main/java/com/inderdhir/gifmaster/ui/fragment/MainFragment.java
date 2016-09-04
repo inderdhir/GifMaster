@@ -150,7 +150,7 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         mGifsRecyclerView.setDrawingCacheEnabled(true);
         mGifsRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_LOW);
         mGifsRecyclerView.setLayoutManager(mGridLayoutManager);
-        adapter = new GifsRecyclerViewAdapter(mGifItemsList);
+        adapter = new GifsRecyclerViewAdapter(getContext(), mGifItemsList);
         mGifsRecyclerView.setAdapter(adapter);
         mGifsRecyclerView.addOnScrollListener(mScrollListener);
     }
