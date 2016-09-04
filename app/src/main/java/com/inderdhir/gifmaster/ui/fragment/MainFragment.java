@@ -169,6 +169,7 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     }
 
     private void searchForGifs(String searchQuery) {
+        mGifsRecyclerView.scrollToPosition(0);
         if (StringUtils.isNullOrEmpty(searchQuery)) {
             getTrendingGifs();
             Utils.hideSoftKeyboard(getActivity(), rootView);
