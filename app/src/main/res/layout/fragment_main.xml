@@ -18,6 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/search_gifs_edit_text_height"
             android:background="@color/primary_light"
+            android:freezesText="true"
             android:hint="@string/search_for_gifs"
             android:imeOptions="actionSearch"
             android:inputType="text|textAutoComplete"

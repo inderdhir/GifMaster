@@ -20,6 +20,7 @@ import com.inderdhir.gifmaster.core.GifMasterApplication;
 import com.inderdhir.gifmaster.core.GiphyRetrofitService;
 import com.inderdhir.gifmaster.model.GifItem;
 import com.inderdhir.gifmaster.ui.adapter.GifsRecyclerViewAdapter;
+import com.inderdhir.gifmaster.util.BundleKeys;
 import com.inderdhir.gifmaster.util.StringUtils;
 import com.inderdhir.gifmaster.util.Utils;
 
@@ -50,8 +51,6 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
 
     private static final int GIF_FETCH_LIMIT = 25;
     private static final int GIF_INFINITE_SCROLL_THRESHOLD = 5;
-    private static final String RECYCLER_VIEW_STATE = "recycler_view_state";
-    private static final String LIST_KEY = "list_key";
 
     private View rootView;
     private ArrayList<GifItem> mGifItemsList;
@@ -59,11 +58,12 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     private GifsRecyclerViewAdapter adapter;
     private RecyclerView.OnScrollListener mScrollListener;
     private CustomLinearLayoutManager mLinearLayoutManager;
-    private boolean isSearching = false;
+    private boolean mConfigChanged;
+    private boolean isSearching;
     private boolean isLoadingItems = true;
     private String mCurrentSearchQuery;
     private int mPreviousItemsTotal;
-    private int mTotalItemCount;
+    private int mTotalItems;
 
     public static MainFragment newInstance() {
         return new MainFragment();
@@ -83,9 +83,9 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
                 RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
                 if (layoutManager instanceof LinearLayoutManager) {
                     LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
-                    mTotalItemCount = linearLayoutManager.getItemCount();
+                    mTotalItems = linearLayoutManager.getItemCount();
                     final int lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
-                    if (!isLoadingItems && mTotalItemCount <= (lastVisibleItem + GIF_INFINITE_SCROLL_THRESHOLD)) {
+                    if (!isLoadingItems && mTotalItems <= (lastVisibleItem + GIF_INFINITE_SCROLL_THRESHOLD)) {
                         mPreviousItemsTotal += GIF_FETCH_LIMIT;
                         makeAppropriateRequest(true, false);
                     }
@@ -96,10 +96,16 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         currentGifsRequest = service.getTrendingGifs(GIF_FETCH_LIMIT, mPreviousItemsTotal);
 
         if (savedInstanceState != null) {
-            mGifItemsList = savedInstanceState.getParcelableArrayList(LIST_KEY);
+            mConfigChanged = savedInstanceState.getBoolean(BundleKeys.CONFIG_CHANGED_KEY);
+            mGifItemsList = savedInstanceState.getParcelableArrayList(BundleKeys.LIST_KEY);
             Parcelable savedRecyclerLayoutState =
-                    savedInstanceState.getParcelable(RECYCLER_VIEW_STATE);
+                    savedInstanceState.getParcelable(BundleKeys.RECYCLER_VIEW_STATE_KEY);
             mLinearLayoutManager.onRestoreInstanceState(savedRecyclerLayoutState);
+            isSearching = savedInstanceState.getBoolean(BundleKeys.IS_SEARCHING_KEY);
+            isLoadingItems = savedInstanceState.getBoolean(BundleKeys.IS_LOADING_ITEMS_KEY);
+            mCurrentSearchQuery = savedInstanceState.getString(BundleKeys.SEARCH_QUERY_KEY);
+            mPreviousItemsTotal = savedInstanceState.getInt(BundleKeys.PREVIOUS_ITEMS_TOTAL_KEY);
+            mTotalItems = savedInstanceState.getInt(BundleKeys.TOTAL_ITEMS_KEY);
         } else {
             mGifItemsList = new ArrayList<>();
         }
@@ -146,9 +152,15 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     @Override
     public void onSaveInstanceState(final Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putParcelableArrayList(LIST_KEY, mGifItemsList);
-        outState.putParcelable(RECYCLER_VIEW_STATE,
+        outState.putBoolean(BundleKeys.CONFIG_CHANGED_KEY, true);
+        outState.putParcelableArrayList(BundleKeys.LIST_KEY, mGifItemsList);
+        outState.putParcelable(BundleKeys.RECYCLER_VIEW_STATE_KEY,
                 mLinearLayoutManager.onSaveInstanceState());
+        outState.putBoolean(BundleKeys.IS_SEARCHING_KEY, isSearching);
+        outState.putBoolean(BundleKeys.IS_LOADING_ITEMS_KEY, isLoadingItems);
+        outState.putString(BundleKeys.SEARCH_QUERY_KEY, mCurrentSearchQuery);
+        outState.putInt(BundleKeys.PREVIOUS_ITEMS_TOTAL_KEY, mPreviousItemsTotal);
+        outState.putInt(BundleKeys.TOTAL_ITEMS_KEY, mTotalItems);
     }
 
     @Override
@@ -191,7 +203,7 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     }
 
     private void makeAppropriateRequest(boolean loadMore, boolean clearAndLoadNew) {
-        if (loadMore || clearAndLoadNew || (currentGifsRequest != null && !currentGifsRequest.isExecuted())) {
+        if (!mConfigChanged && (loadMore || clearAndLoadNew || (currentGifsRequest != null && !currentGifsRequest.isExecuted()))) {
             if (clearAndLoadNew) {
                 mPreviousItemsTotal = 0;
                 mGifItemsList.clear();
@@ -211,6 +223,10 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
             }
         } else {
             mSwipeRefreshLayout.setRefreshing(false);
+        }
+
+        if (mConfigChanged) {
+            mConfigChanged = false;
         }
     }
 
