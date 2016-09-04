@@ -18,6 +18,8 @@ public class MainActivity extends BaseActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        // This fixes fragment onCreate being called twice and savedInstanceState being null
+        // the second time
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     MainFragment.newInstance()).commit();

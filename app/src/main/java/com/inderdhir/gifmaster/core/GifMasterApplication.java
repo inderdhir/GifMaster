@@ -5,8 +5,9 @@ import android.app.Application;
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.inderdhir.gifmaster.core.di.ApplicationComponent;
 import com.inderdhir.gifmaster.core.di.DaggerApplicationComponent;
-import com.inderdhir.gifmaster.core.di.module.NetworkModule;
 import com.inderdhir.gifmaster.core.di.module.AppModule;
+import com.inderdhir.gifmaster.core.di.module.GiphyModule;
+import com.inderdhir.gifmaster.core.di.module.NetworkModule;
 
 
 public class GifMasterApplication extends Application {
@@ -19,6 +20,7 @@ public class GifMasterApplication extends Application {
         applicationComponent = DaggerApplicationComponent.builder()
                 .appModule(new AppModule(this))
                 .networkModule(new NetworkModule())
+                .giphyModule(new GiphyModule())
                 .build();
 
         Fresco.initialize(this);
@@ -27,5 +29,4 @@ public class GifMasterApplication extends Application {
     public ApplicationComponent component() {
         return applicationComponent;
     }
-
 }

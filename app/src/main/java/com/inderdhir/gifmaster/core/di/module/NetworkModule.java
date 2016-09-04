@@ -2,22 +2,14 @@ package com.inderdhir.gifmaster.core.di.module;
 
 import android.content.res.AssetManager;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import com.inderdhir.gifmaster.BuildConfig;
 import com.inderdhir.gifmaster.core.CacheControlInterceptor;
-import com.inderdhir.gifmaster.core.GifDeserializer;
 import com.inderdhir.gifmaster.core.GifMasterApplication;
-import com.inderdhir.gifmaster.core.GiphyRetrofitService;
-import com.inderdhir.gifmaster.model.GifItem;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -35,9 +27,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 @Module
 public class NetworkModule {
 
-    @Inject
-    GifMasterApplication mApplication;
-
     private static final String DEBUG_PROPERTIES_FILENAME = "config.debug.properties";
     private static final String RELEASE_PROPERTIES_FILENAME = "config.release.properties";
     private static final int OKHTTP_CACHE_SIZE = 10 * 1024 * 1024; // 10 MiB
@@ -52,13 +41,14 @@ public class NetworkModule {
 
     @Provides
     @Singleton
-    public GiphyRetrofitService provideGiphyService(Retrofit retrofit) {
-        return retrofit.create(GiphyRetrofitService.class);
+    Cache provideCache(GifMasterApplication application) {
+        return new Cache(application.getCacheDir(), OKHTTP_CACHE_SIZE);
     }
 
     @Provides
     @Singleton
     public OkHttpClient provideOkHttpClient(final Properties properties,
+                                            final Cache cache,
                                             final GifMasterApplication application) {
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
         if (BuildConfig.DEBUG) {
@@ -81,8 +71,10 @@ public class NetworkModule {
             }
         });
         // Caching
-        httpClient.addNetworkInterceptor(new CacheControlInterceptor(application));
-        httpClient.cache(new Cache(application.getCacheDir(), OKHTTP_CACHE_SIZE));
+        CacheControlInterceptor cacheControlInterceptor = new CacheControlInterceptor(application);
+        httpClient.cache(cache);
+        httpClient.addNetworkInterceptor(cacheControlInterceptor);
+        httpClient.addInterceptor(cacheControlInterceptor); // For offline mode
 
         httpClient.connectTimeout(10, TimeUnit.SECONDS);
         httpClient.readTimeout(10, TimeUnit.SECONDS);
@@ -92,15 +84,17 @@ public class NetworkModule {
 
     @Provides
     @Singleton
-    public Retrofit provideRetrofit(Properties properties, OkHttpClient httpClient) {
+    public Retrofit provideRetrofit(Properties properties, OkHttpClient httpClient,
+                                    GsonConverterFactory factory) {
         Retrofit.Builder builder =
                 new Retrofit.Builder()
                         .baseUrl(properties.getProperty(BASE_URL))
-                        .addConverterFactory(buildGsonConverter())
+                        .addConverterFactory(factory)
                         .addConverterFactory(GsonConverterFactory.create());
 
         return builder.client(httpClient).build();
     }
+
 
     @Provides
     @Singleton
@@ -117,15 +111,5 @@ public class NetworkModule {
             e.printStackTrace();
         }
         return properties;
-    }
-
-    private GsonConverterFactory buildGsonConverter() {
-        GsonBuilder gsonBuilder = new GsonBuilder();
-
-        // Adding custom deserializers
-        Type gifItemsListType = new TypeToken<List<GifItem>>() {
-        }.getType();
-        gsonBuilder.registerTypeAdapter(gifItemsListType, new GifDeserializer());
-        return GsonConverterFactory.create(gsonBuilder.create());
     }
 }
