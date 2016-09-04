@@ -3,6 +3,7 @@ package com.inderdhir.gifmaster.ui.fragment;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
@@ -15,6 +16,11 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.facebook.drawee.backends.pipeline.Fresco;
+import com.facebook.drawee.interfaces.DraweeController;
+import com.facebook.drawee.view.SimpleDraweeView;
+import com.facebook.imagepipeline.request.ImageRequest;
+import com.facebook.imagepipeline.request.ImageRequestBuilder;
 import com.inderdhir.gifmaster.R;
 import com.inderdhir.gifmaster.core.GifMasterApplication;
 import com.inderdhir.gifmaster.core.GiphyRetrofitService;
@@ -26,11 +32,13 @@ import com.inderdhir.gifmaster.util.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -42,6 +50,10 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     @Inject
     GiphyRetrofitService service;
 
+    @BindView(R.id.network_error_layout)
+    ViewGroup mNetworkErrorLayout;
+    @BindView(R.id.network_error_gif_view)
+    SimpleDraweeView mNetworkErrorGifView;
     @BindView(R.id.swipe_refresh_layout)
     SwipeRefreshLayout mSwipeRefreshLayout;
     @BindView(R.id.search_gifs_edit_text)
@@ -58,6 +70,7 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     private GifsRecyclerViewAdapter adapter;
     private RecyclerView.OnScrollListener mScrollListener;
     private CustomLinearLayoutManager mLinearLayoutManager;
+    private Random mRandom;
     private boolean mConfigChanged;
     private boolean isSearching;
     private boolean isLoadingItems = true;
@@ -74,6 +87,7 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         super.onCreate(savedInstanceState);
         ((GifMasterApplication) getActivity().getApplication()).component().inject(this);
 
+        mRandom = new Random();
         mLinearLayoutManager = new CustomLinearLayoutManager(getContext());
         mScrollListener = new RecyclerView.OnScrollListener() {
             @Override
@@ -149,6 +163,11 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         }
     }
 
+    @OnClick(R.id.retry_button)
+    public void retryButtonClicked() {
+        makeAppropriateRequest(false, true);
+    }
+
     @Override
     public void onSaveInstanceState(final Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -166,6 +185,11 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     @Override
     public void onResponse(final Call<List<GifItem>> call,
                            final Response<List<GifItem>> response) {
+        if (mNetworkErrorLayout.getVisibility() != View.GONE) {
+            mNetworkErrorLayout.setVisibility(View.GONE);
+            mSwipeRefreshLayout.setVisibility(View.VISIBLE);
+        }
+
         if (isSearching) {
             Utils.hideSoftKeyboard(getActivity(), rootView);
         }
@@ -180,7 +204,26 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
 
     @Override
     public void onFailure(final Call<List<GifItem>> call, final Throwable t) {
-        // TODO: Implement this
+        // Show one of three GIFs randomly
+        @DrawableRes int imageResourceId = R.drawable.network_error_1;
+        switch (mRandom.nextInt(3)) {
+            case 1:
+                imageResourceId = R.drawable.network_error_2;
+                break;
+            case 2:
+                imageResourceId = R.drawable.network_error_3;
+                break;
+        }
+        ImageRequest imageRequest = ImageRequestBuilder.newBuilderWithResourceId(imageResourceId).build();
+        DraweeController controller = Fresco.newDraweeControllerBuilder()
+                .setUri(imageRequest.getSourceUri())
+                .setAutoPlayAnimations(true)
+                .build();
+        mNetworkErrorGifView.setController(controller);
+
+        mNetworkErrorLayout.setVisibility(View.VISIBLE);
+        mSwipeRefreshLayout.setVisibility(View.GONE);
+
         isLoadingItems = false;
         mSwipeRefreshLayout.setRefreshing(false);
     }
