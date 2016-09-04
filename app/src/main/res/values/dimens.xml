@@ -14,6 +14,7 @@
     <!-- Text -->
     <dimen name="default_text_size">16sp</dimen>
 
+    <dimen name="search_gifs_edit_text_height">50dp</dimen>
     <dimen name="gif_item_height">300dp</dimen>
     <dimen name="gif_item_margin_bottom">5dp</dimen>
 </resources>

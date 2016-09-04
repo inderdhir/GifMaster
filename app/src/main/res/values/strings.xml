@@ -4,5 +4,6 @@
 
     <!-- Content Descriptions -->
     <string name="gif_item">GIF</string>
+    <string name="search_for_gifs">Search for GIFs</string>
 
 </resources>
