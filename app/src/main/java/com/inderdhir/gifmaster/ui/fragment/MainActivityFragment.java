@@ -1,6 +1,8 @@
 package com.inderdhir.gifmaster.ui.fragment;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -26,7 +28,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 
-public class MainActivityFragment extends BaseFragment {
+public class MainActivityFragment extends BaseFragment implements Callback<List<GifItem>> {
 
     @BindView(R.id.gifs_recycler_view)
     RecyclerView mGifsRecyclerView;
@@ -34,15 +36,31 @@ public class MainActivityFragment extends BaseFragment {
     @Inject
     GiphyRetrofitService service;
 
-    private List<GifItem> mGifItems = new ArrayList<>();
+    private static final String RECYCLER_VIEW_STATE = "recycler_view_state";
+    private static final String LIST_KEY = "list_key";
+
+    private ArrayList<GifItem> mGifItemsList = new ArrayList<>();
     private Call<List<GifItem>> call;
     private GifsRecyclerViewAdapter adapter;
+    private CustomLinearLayoutManager mLinearLayoutManager;
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ((GifMasterApplication) getActivity().getApplication()).component().inject(this);
-        call = service.getTrendingGifs(0);
+
+        mLinearLayoutManager = new CustomLinearLayoutManager(getContext());
+        call = service.getTrendingGifs(0); // maybe get this through bundle too?
+
+        if (savedInstanceState != null) {
+            mGifItemsList = savedInstanceState.getParcelableArrayList(LIST_KEY);
+            Parcelable savedRecyclerLayoutState =
+                    savedInstanceState.getParcelable(RECYCLER_VIEW_STATE);
+            mLinearLayoutManager.onRestoreInstanceState(savedRecyclerLayoutState);
+        } else {
+            mGifItemsList = new ArrayList<>();
+        }
     }
 
     @Override
@@ -50,7 +68,6 @@ public class MainActivityFragment extends BaseFragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
         ButterKnife.bind(this, view);
-
         return view;
     }
 
@@ -59,9 +76,11 @@ public class MainActivityFragment extends BaseFragment {
         super.onViewCreated(view, savedInstanceState);
 
         mGifsRecyclerView.setHasFixedSize(true);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
-        mGifsRecyclerView.setLayoutManager(linearLayoutManager);
-        adapter = new GifsRecyclerViewAdapter(mGifItems);
+        mGifsRecyclerView.setItemViewCacheSize(40);
+        mGifsRecyclerView.setDrawingCacheEnabled(true);
+        mGifsRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_LOW);
+        mGifsRecyclerView.setLayoutManager(mLinearLayoutManager);
+        adapter = new GifsRecyclerViewAdapter(mGifItemsList);
         mGifsRecyclerView.setAdapter(adapter);
 
 //        mGifsRecyclerView.addOnScrollListener();
@@ -70,7 +89,10 @@ public class MainActivityFragment extends BaseFragment {
     @Override
     public void onResume() {
         super.onResume();
-        getTrendingGifs();
+
+        if (!call.isExecuted()) {
+            call.enqueue(this);
+        }
     }
 
     @Override
@@ -81,21 +103,40 @@ public class MainActivityFragment extends BaseFragment {
         }
     }
 
-    private void getTrendingGifs() {
-        call.enqueue(new Callback<List<GifItem>>() {
-            @Override
-            public void onResponse(final Call<List<GifItem>> call, final Response<List<GifItem>> response) {
-                List<GifItem> gifItems = response.body();
-                if (gifItems != null && !gifItems.isEmpty()) {
-                    mGifItems.addAll(gifItems);
-                    adapter.notifyDataSetChanged();
-                }
-            }
+    @Override
+    public void onSaveInstanceState(final Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList(LIST_KEY, mGifItemsList);
+        outState.putParcelable(RECYCLER_VIEW_STATE,
+                mLinearLayoutManager.onSaveInstanceState());
+    }
 
-            @Override
-            public void onFailure(final Call<List<GifItem>> call, final Throwable t) {
+    @Override
+    public void onResponse(final Call<List<GifItem>> call, final Response<List<GifItem>> response) {
 
-            }
-        });
+        List<GifItem> gifItems = response.body();
+        if (gifItems != null && !gifItems.isEmpty()) {
+            mGifItemsList.addAll(gifItems);
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public void onFailure(final Call<List<GifItem>> call, final Throwable t) {
+        // TODO: Implement this
+    }
+
+    private static class CustomLinearLayoutManager extends LinearLayoutManager {
+
+        private static final int EXTRA_LAYOUT_SPACE = 600;
+
+        public CustomLinearLayoutManager(final Context context) {
+            super(context);
+        }
+
+        @Override
+        protected int getExtraLayoutSpace(final RecyclerView.State state) {
+            return EXTRA_LAYOUT_SPACE;
+        }
     }
 }
