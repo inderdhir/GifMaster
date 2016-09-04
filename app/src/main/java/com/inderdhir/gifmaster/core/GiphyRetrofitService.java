@@ -12,8 +12,11 @@ import retrofit2.http.Query;
 public interface GiphyRetrofitService {
 
     @GET("trending")
-    Call<List<GifItem>> getTrendingGifs(@Query("offset") int offset);
+    Call<List<GifItem>> getTrendingGifs(@Query("limit") final int fetchLimit,
+                                        @Query("offset") final int offset);
 
     @GET("search")
-    Call<List<GifItem>> searchGif(@Query("q") String searchQuery);
+    Call<List<GifItem>> searchForGifs(@Query("q") final String searchQuery,
+                                      @Query("limit") final int fetchLimit,
+                                      @Query("offset") final int offset);
 }

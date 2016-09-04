@@ -1,4 +1,4 @@
-package com.inderdhir.gifmaster.adapter;
+package com.inderdhir.gifmaster.ui.adapter;
 
 import android.net.Uri;
 import android.support.annotation.NonNull;

@@ -16,10 +16,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.inderdhir.gifmaster.R;
-import com.inderdhir.gifmaster.adapter.GifsRecyclerViewAdapter;
 import com.inderdhir.gifmaster.core.GifMasterApplication;
 import com.inderdhir.gifmaster.core.GiphyRetrofitService;
 import com.inderdhir.gifmaster.model.GifItem;
+import com.inderdhir.gifmaster.ui.adapter.GifsRecyclerViewAdapter;
 import com.inderdhir.gifmaster.util.StringUtils;
 import com.inderdhir.gifmaster.util.Utils;
 
@@ -38,6 +38,9 @@ import retrofit2.Response;
 public class MainFragment extends BaseFragment implements Callback<List<GifItem>>,
         SwipeRefreshLayout.OnRefreshListener, TextView.OnEditorActionListener {
 
+    @Inject
+    GiphyRetrofitService service;
+
     @BindView(R.id.swipe_refresh_layout)
     SwipeRefreshLayout mSwipeRefreshLayout;
     @BindView(R.id.search_gifs_edit_text)
@@ -45,18 +48,22 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     @BindView(R.id.gifs_recycler_view)
     RecyclerView mGifsRecyclerView;
 
-    @Inject
-    GiphyRetrofitService service;
-
+    private static final int GIF_FETCH_LIMIT = 25;
+    private static final int GIF_INFINITE_SCROLL_THRESHOLD = 5;
     private static final String RECYCLER_VIEW_STATE = "recycler_view_state";
     private static final String LIST_KEY = "list_key";
 
     private View rootView;
-    private ArrayList<GifItem> mGifItemsList = new ArrayList<>();
-    private Call<List<GifItem>> trendingGifsCall;
+    private ArrayList<GifItem> mGifItemsList;
+    private Call<List<GifItem>> currentGifsRequest;
     private GifsRecyclerViewAdapter adapter;
+    private RecyclerView.OnScrollListener mScrollListener;
     private CustomLinearLayoutManager mLinearLayoutManager;
-
+    private boolean isSearching = false;
+    private boolean isLoadingItems = true;
+    private String mCurrentSearchQuery;
+    private int mPreviousItemsTotal;
+    private int mTotalItemCount;
 
     public static MainFragment newInstance() {
         return new MainFragment();
@@ -68,7 +75,25 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         ((GifMasterApplication) getActivity().getApplication()).component().inject(this);
 
         mLinearLayoutManager = new CustomLinearLayoutManager(getContext());
-        trendingGifsCall = service.getTrendingGifs(0); // maybe get this through bundle too?
+        mScrollListener = new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(final RecyclerView recyclerView, final int dx, final int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+                if (layoutManager instanceof LinearLayoutManager) {
+                    LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
+                    mTotalItemCount = linearLayoutManager.getItemCount();
+                    final int lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
+                    if (!isLoadingItems && mTotalItemCount <= (lastVisibleItem + GIF_INFINITE_SCROLL_THRESHOLD)) {
+                        mPreviousItemsTotal += GIF_FETCH_LIMIT;
+                        makeAppropriateRequest(true, false);
+                    }
+                }
+            }
+        };
+
+        currentGifsRequest = service.getTrendingGifs(GIF_FETCH_LIMIT, mPreviousItemsTotal);
 
         if (savedInstanceState != null) {
             mGifItemsList = savedInstanceState.getParcelableArrayList(LIST_KEY);
@@ -101,21 +126,20 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         mGifsRecyclerView.setLayoutManager(mLinearLayoutManager);
         adapter = new GifsRecyclerViewAdapter(mGifItemsList);
         mGifsRecyclerView.setAdapter(adapter);
-
-//        mGifsRecyclerView.addOnScrollListener();
+        mGifsRecyclerView.addOnScrollListener(mScrollListener);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        getTrendingGifs();
+        makeAppropriateRequest(false, false);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (trendingGifsCall != null) {
-            trendingGifsCall.cancel();
+        if (currentGifsRequest != null) {
+            currentGifsRequest.cancel();
         }
     }
 
@@ -128,7 +152,12 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     }
 
     @Override
-    public void onResponse(final Call<List<GifItem>> call, final Response<List<GifItem>> response) {
+    public void onResponse(final Call<List<GifItem>> call,
+                           final Response<List<GifItem>> response) {
+        if (isSearching) {
+            Utils.hideSoftKeyboard(getActivity(), rootView);
+        }
+        isLoadingItems = false;
         mSwipeRefreshLayout.setRefreshing(false);
         List<GifItem> gifItems = response.body();
         if (gifItems != null && !gifItems.isEmpty()) {
@@ -140,59 +169,49 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     @Override
     public void onFailure(final Call<List<GifItem>> call, final Throwable t) {
         // TODO: Implement this
+        isLoadingItems = false;
         mSwipeRefreshLayout.setRefreshing(false);
     }
 
     @Override
     public void onRefresh() {
-        getTrendingGifs();
+        makeAppropriateRequest(false, true);
     }
 
     @Override
-    public boolean onEditorAction(final TextView textView, final int actionId, final KeyEvent keyEvent) {
-//        if (keyEvent.getAction() != KeyEvent.ACTION_DOWN)
-//            return false;
-
+    public boolean onEditorAction(final TextView textView, final int actionId,
+                                  final KeyEvent keyEvent) {
         if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-            searchForGifs(textView.getText().toString());
+            mCurrentSearchQuery = textView.getText().toString();
+            isSearching = true;
+            makeAppropriateRequest(false, true);
             return true;
         }
         return false;
     }
 
-    private void getTrendingGifs() {
-        if (trendingGifsCall != null && !trendingGifsCall.isExecuted()) {
-            trendingGifsCall.enqueue(this);
+    private void makeAppropriateRequest(boolean loadMore, boolean clearAndLoadNew) {
+        if (loadMore || clearAndLoadNew || (currentGifsRequest != null && !currentGifsRequest.isExecuted())) {
+            if (clearAndLoadNew) {
+                mPreviousItemsTotal = 0;
+                mGifItemsList.clear();
+                mGifsRecyclerView.scrollToPosition(0);
+            }
+
+            isLoadingItems = true;
+            if (isSearching && !StringUtils.isNullOrEmpty(mCurrentSearchQuery)) {
+                currentGifsRequest = service.searchForGifs(mCurrentSearchQuery,
+                        GIF_FETCH_LIMIT, mPreviousItemsTotal);
+                currentGifsRequest.enqueue(this);
+            } else {
+                isSearching = false;
+                Utils.hideSoftKeyboard(getActivity(), rootView);
+                currentGifsRequest = service.getTrendingGifs(GIF_FETCH_LIMIT, mPreviousItemsTotal);
+                currentGifsRequest.enqueue(this);
+            }
         } else {
             mSwipeRefreshLayout.setRefreshing(false);
         }
-    }
-
-    private void searchForGifs(String searchQuery) {
-        mGifsRecyclerView.scrollToPosition(0);
-        if (StringUtils.isNullOrEmpty(searchQuery)) {
-            getTrendingGifs();
-            Utils.hideSoftKeyboard(getActivity(), rootView);
-            return;
-        }
-
-        service.searchGif(searchQuery).enqueue(new Callback<List<GifItem>>() {
-            @Override
-            public void onResponse(final Call<List<GifItem>> call, final Response<List<GifItem>> response) {
-                Utils.hideSoftKeyboard(getActivity(), rootView);
-                List<GifItem> gifItems = response.body();
-                if (gifItems != null && !gifItems.isEmpty()) {
-                    mGifItemsList.clear();
-                    mGifItemsList.addAll(gifItems);
-                    adapter.notifyDataSetChanged();
-                }
-            }
-
-            @Override
-            public void onFailure(final Call<List<GifItem>> call, final Throwable t) {
-                //TODO: Implement this
-            }
-        });
     }
 
 
