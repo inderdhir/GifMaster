@@ -4,7 +4,7 @@ import com.inderdhir.gifmaster.core.GifMasterApplication;
 import com.inderdhir.gifmaster.core.di.module.ApiModule;
 import com.inderdhir.gifmaster.core.di.module.AppModule;
 import com.inderdhir.gifmaster.ui.activity.MainActivity;
-import com.inderdhir.gifmaster.ui.fragment.MainActivityFragment;
+import com.inderdhir.gifmaster.ui.fragment.MainFragment;
 
 import javax.inject.Singleton;
 
@@ -17,5 +17,5 @@ public interface ApplicationComponent {
 
     void inject(MainActivity activity);
 
-    void inject(MainActivityFragment fragment);
+    void inject(MainFragment fragment);
 }

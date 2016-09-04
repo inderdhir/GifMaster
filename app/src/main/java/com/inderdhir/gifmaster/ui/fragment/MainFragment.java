@@ -35,7 +35,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 
-public class MainActivityFragment extends BaseFragment implements Callback<List<GifItem>>,
+public class MainFragment extends BaseFragment implements Callback<List<GifItem>>,
         SwipeRefreshLayout.OnRefreshListener, TextView.OnEditorActionListener {
 
     @BindView(R.id.swipe_refresh_layout)
@@ -57,6 +57,10 @@ public class MainActivityFragment extends BaseFragment implements Callback<List<
     private GifsRecyclerViewAdapter adapter;
     private CustomLinearLayoutManager mLinearLayoutManager;
 
+
+    public static MainFragment newInstance() {
+        return new MainFragment();
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
