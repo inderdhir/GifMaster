@@ -6,6 +6,7 @@ import android.os.Parcelable;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.KeyEvent;
@@ -69,7 +70,7 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     private Call<List<GifItem>> currentGifsRequest;
     private GifsRecyclerViewAdapter adapter;
     private RecyclerView.OnScrollListener mScrollListener;
-    private CustomLinearLayoutManager mLinearLayoutManager;
+    private CustomGridLayoutManager mGridLayoutManager;
     private Random mRandom;
     private boolean mConfigChanged;
     private boolean isSearching;
@@ -88,12 +89,15 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         ((GifMasterApplication) getActivity().getApplication()).component().inject(this);
 
         mRandom = new Random();
-        mLinearLayoutManager = new CustomLinearLayoutManager(getContext());
+        if (Utils.isLandscape(getContext())) {
+            mGridLayoutManager = new CustomGridLayoutManager(getContext(), 3);
+        } else {
+            mGridLayoutManager = new CustomGridLayoutManager(getContext(), 1);
+        }
         mScrollListener = new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(final RecyclerView recyclerView, final int dx, final int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-
                 RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
                 if (layoutManager instanceof LinearLayoutManager) {
                     LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
@@ -112,9 +116,11 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         if (savedInstanceState != null) {
             mConfigChanged = savedInstanceState.getBoolean(BundleKeys.CONFIG_CHANGED_KEY);
             mGifItemsList = savedInstanceState.getParcelableArrayList(BundleKeys.LIST_KEY);
-            Parcelable savedRecyclerLayoutState =
-                    savedInstanceState.getParcelable(BundleKeys.RECYCLER_VIEW_STATE_KEY);
-            mLinearLayoutManager.onRestoreInstanceState(savedRecyclerLayoutState);
+            Parcelable glmState =
+                    savedInstanceState.getParcelable(BundleKeys.GLM_STATE_KEY);
+            if (glmState != null) {
+                mGridLayoutManager.onRestoreInstanceState(glmState);
+            }
             isSearching = savedInstanceState.getBoolean(BundleKeys.IS_SEARCHING_KEY);
             isLoadingItems = savedInstanceState.getBoolean(BundleKeys.IS_LOADING_ITEMS_KEY);
             mCurrentSearchQuery = savedInstanceState.getString(BundleKeys.SEARCH_QUERY_KEY);
@@ -143,7 +149,7 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         mGifsRecyclerView.setItemViewCacheSize(40);
         mGifsRecyclerView.setDrawingCacheEnabled(true);
         mGifsRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_LOW);
-        mGifsRecyclerView.setLayoutManager(mLinearLayoutManager);
+        mGifsRecyclerView.setLayoutManager(mGridLayoutManager);
         adapter = new GifsRecyclerViewAdapter(mGifItemsList);
         mGifsRecyclerView.setAdapter(adapter);
         mGifsRecyclerView.addOnScrollListener(mScrollListener);
@@ -173,8 +179,10 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         super.onSaveInstanceState(outState);
         outState.putBoolean(BundleKeys.CONFIG_CHANGED_KEY, true);
         outState.putParcelableArrayList(BundleKeys.LIST_KEY, mGifItemsList);
-        outState.putParcelable(BundleKeys.RECYCLER_VIEW_STATE_KEY,
-                mLinearLayoutManager.onSaveInstanceState());
+        if (mGridLayoutManager != null) {
+            outState.putParcelable(BundleKeys.GLM_STATE_KEY,
+                    mGridLayoutManager.onSaveInstanceState());
+        }
         outState.putBoolean(BundleKeys.IS_SEARCHING_KEY, isSearching);
         outState.putBoolean(BundleKeys.IS_LOADING_ITEMS_KEY, isLoadingItems);
         outState.putString(BundleKeys.SEARCH_QUERY_KEY, mCurrentSearchQuery);
@@ -284,17 +292,27 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     }
 
 
-    private static class CustomLinearLayoutManager extends LinearLayoutManager {
+    private static class CustomGridLayoutManager extends GridLayoutManager {
 
-        private static final int EXTRA_LAYOUT_SPACE = 600;
+        private static final int EXTRA_LAYOUT_SPACE_PORTRAIT = 1000;
+        private static final int EXTRA_LAYOUT_SPACE_LANDSCAPE = 2000;
+        private Context mContext;
 
-        public CustomLinearLayoutManager(final Context context) {
-            super(context);
+        public CustomGridLayoutManager(final Context context, final int spanCount) {
+            super(context, spanCount);
+            init(context);
         }
 
         @Override
         protected int getExtraLayoutSpace(final RecyclerView.State state) {
-            return EXTRA_LAYOUT_SPACE;
+            if (Utils.isLandscape(mContext)) {
+                return EXTRA_LAYOUT_SPACE_LANDSCAPE;
+            }
+            return EXTRA_LAYOUT_SPACE_PORTRAIT;
+        }
+
+        private void init(Context context) {
+            mContext = context;
         }
     }
 }

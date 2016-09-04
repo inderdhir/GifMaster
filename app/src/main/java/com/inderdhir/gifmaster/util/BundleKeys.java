@@ -5,7 +5,7 @@ public final class BundleKeys {
 
     public static final String CONFIG_CHANGED_KEY = "config_changed_key";
 
-    public static final String RECYCLER_VIEW_STATE_KEY = "recycler_view_state_key";
+    public static final String GLM_STATE_KEY = "glm_state_key";
     public static final String LIST_KEY = "list_key";
     public static final String IS_SEARCHING_KEY = "is_searching_key";
     public static final String IS_LOADING_ITEMS_KEY = "is_loading_items_key";

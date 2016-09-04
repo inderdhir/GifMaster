@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:fresco="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="@dimen/default_margin"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:visibility="invisible"
+    tools:visibility="visible">
+
+    <com.facebook.drawee.view.SimpleDraweeView
+        android:id="@+id/network_error_gif_view"
+        android:layout_width="@dimen/gif_error_height"
+        android:layout_height="@dimen/gif_error_height"
+        android:layout_margin="@dimen/default_margin"
+        fresco:actualImageScaleType="focusCrop"
+        fresco:fadeDuration="300"
+        fresco:failureImage="@color/gif_error_red"
+        fresco:placeholderImage="@color/gif_placeholder_gray"
+        fresco:retryImage="@color/gif_placeholder_gray"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:text="@string/error.network.title"
+            android:textColor="@color/primary_text"
+            android:textSize="@dimen/big_text_size"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/small_margin"
+            android:gravity="center_horizontal"
+            android:text="@string/error.network.subtitle"
+            android:textColor="@color/secondary_text"
+            android:textSize="@dimen/default_text_size"/>
+
+        <Button
+            android:id="@+id/retry_button"
+            android:layout_width="@dimen/retry_button_width"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="@dimen/default_margin_x2"
+            android:background="@color/primary"
+            android:text="@string/error.retry"
+            android:textColor="@color/white"/>
+
+    </LinearLayout>
+
+</LinearLayout>

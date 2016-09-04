@@ -22,7 +22,6 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
-import okhttp3.Cache;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -45,8 +44,6 @@ public class NetworkModule {
     private static final String API_KEY = "api_key";
     private static final String BASE_URL = "base_url";
 
-    private static final int OKHTTP_CACHE_SIZE = 10 * 1024 * 1024; // 10 MiB
-    private static final int OKHTTP_CACHE_AGE_SECONDS = 15;
 
     public NetworkModule() {
     }
@@ -82,7 +79,6 @@ public class NetworkModule {
             }
         });
         httpClient.addNetworkInterceptor(new CacheControlInterceptor(application)); // Caching
-        httpClient.cache(new Cache(application.getCacheDir(), OKHTTP_CACHE_SIZE));
         httpClient.connectTimeout(10, TimeUnit.SECONDS);
         httpClient.readTimeout(10, TimeUnit.SECONDS);
 
