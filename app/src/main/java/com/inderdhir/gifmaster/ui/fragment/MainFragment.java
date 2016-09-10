@@ -1,12 +1,10 @@
 package com.inderdhir.gifmaster.ui.fragment;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.KeyEvent;
@@ -26,6 +24,7 @@ import com.inderdhir.gifmaster.R;
 import com.inderdhir.gifmaster.core.GifMasterApplication;
 import com.inderdhir.gifmaster.core.GiphyRetrofitService;
 import com.inderdhir.gifmaster.model.GifItem;
+import com.inderdhir.gifmaster.ui.adapter.CustomGridLayoutManager;
 import com.inderdhir.gifmaster.ui.adapter.GifsRecyclerViewAdapter;
 import com.inderdhir.gifmaster.util.BundleKeys;
 import com.inderdhir.gifmaster.util.StringUtils;
@@ -72,12 +71,12 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     private RecyclerView.OnScrollListener mScrollListener;
     private CustomGridLayoutManager mGridLayoutManager;
     private Random mRandom;
-    private boolean mConfigChanged;
     private boolean isSearching;
     private boolean isLoadingItems = true;
     private String mCurrentSearchQuery;
     private int mPreviousItemsTotal;
     private int mTotalItems;
+    private boolean mClearAndLoadNew;
 
     public static MainFragment newInstance() {
         return new MainFragment();
@@ -105,7 +104,8 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
                     final int lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
                     if (!isLoadingItems && mTotalItems <= (lastVisibleItem + GIF_INFINITE_SCROLL_THRESHOLD)) {
                         mPreviousItemsTotal += GIF_FETCH_LIMIT;
-                        makeAppropriateRequest(true, false);
+                        mClearAndLoadNew = false;
+                        makeAppropriateRequest(true);
                     }
                 }
             }
@@ -114,7 +114,6 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         currentGifsRequest = service.getTrendingGifs(GIF_FETCH_LIMIT, mPreviousItemsTotal);
 
         if (savedInstanceState != null) {
-            mConfigChanged = savedInstanceState.getBoolean(BundleKeys.CONFIG_CHANGED_KEY);
             mGifItemsList = savedInstanceState.getParcelableArrayList(BundleKeys.LIST_KEY);
             Parcelable glmState =
                     savedInstanceState.getParcelable(BundleKeys.GLM_STATE_KEY);
@@ -127,6 +126,7 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
             mPreviousItemsTotal = savedInstanceState.getInt(BundleKeys.PREVIOUS_ITEMS_TOTAL_KEY);
             mTotalItems = savedInstanceState.getInt(BundleKeys.TOTAL_ITEMS_KEY);
         } else {
+            mClearAndLoadNew = true;
             mGifItemsList = new ArrayList<>();
         }
     }
@@ -158,7 +158,7 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     @Override
     public void onResume() {
         super.onResume();
-        makeAppropriateRequest(false, false);
+        makeAppropriateRequest(false);
     }
 
     @Override
@@ -169,15 +169,9 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         }
     }
 
-    @OnClick(R.id.retry_button)
-    public void retryButtonClicked() {
-        makeAppropriateRequest(false, true);
-    }
-
     @Override
     public void onSaveInstanceState(final Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean(BundleKeys.CONFIG_CHANGED_KEY, true);
         outState.putParcelableArrayList(BundleKeys.LIST_KEY, mGifItemsList);
         if (mGridLayoutManager != null) {
             outState.putParcelable(BundleKeys.GLM_STATE_KEY,
@@ -190,6 +184,13 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         outState.putInt(BundleKeys.TOTAL_ITEMS_KEY, mTotalItems);
     }
 
+    @OnClick(R.id.retry_button)
+    public void retryButtonClicked() {
+        mClearAndLoadNew = true;
+        makeAppropriateRequest(false);
+    }
+
+    //region Retrofit Callback
     @Override
     public void onResponse(final Call<List<GifItem>> call,
                            final Response<List<GifItem>> response) {
@@ -208,7 +209,12 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
             List<GifItem> gifItems = response.body();
             if (gifItems != null && !gifItems.isEmpty()) {
                 mGifItemsList.addAll(gifItems);
-                adapter.notifyDataSetChanged();
+                if (mClearAndLoadNew) {
+                    mClearAndLoadNew = false;
+                    adapter.notifyDataSetChanged();
+                } else {
+                    adapter.notifyItemRangeChanged(mPreviousItemsTotal - 1, GIF_FETCH_LIMIT);
+                }
             }
         } else {
             showFailure();
@@ -219,27 +225,36 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     public void onFailure(final Call<List<GifItem>> call, final Throwable t) {
         showFailure();
     }
+    //endregion
 
+    //region SwipeRefresh
     @Override
     public void onRefresh() {
-        makeAppropriateRequest(false, true);
+        mClearAndLoadNew = true;
+        makeAppropriateRequest(false);
     }
+    //endregion
 
+    //region EditText
     @Override
     public boolean onEditorAction(final TextView textView, final int actionId,
                                   final KeyEvent keyEvent) {
         if (actionId == EditorInfo.IME_ACTION_SEARCH) {
             mCurrentSearchQuery = textView.getText().toString();
             isSearching = true;
-            makeAppropriateRequest(false, true);
+            mClearAndLoadNew = true;
+            makeAppropriateRequest(false);
             return true;
         }
         return false;
     }
+    //endregion
 
-    private void makeAppropriateRequest(boolean loadMore, boolean clearAndLoadNew) {
-        if (!mConfigChanged && (loadMore || clearAndLoadNew || (currentGifsRequest != null && !currentGifsRequest.isExecuted()))) {
-            if (clearAndLoadNew) {
+    //region Private methods
+    private void makeAppropriateRequest(boolean loadMore) {
+        if (loadMore || mClearAndLoadNew ||
+                (currentGifsRequest != null && !currentGifsRequest.isExecuted())) {
+            if (mClearAndLoadNew) {
                 mPreviousItemsTotal = 0;
                 mGifItemsList.clear();
                 mGifsRecyclerView.scrollToPosition(0);
@@ -258,10 +273,6 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
             }
         } else {
             mSwipeRefreshLayout.setRefreshing(false);
-        }
-
-        if (mConfigChanged) {
-            mConfigChanged = false;
         }
     }
 
@@ -290,29 +301,5 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         isLoadingItems = false;
         mSwipeRefreshLayout.setRefreshing(false);
     }
-
-
-    private static class CustomGridLayoutManager extends GridLayoutManager {
-
-        private static final int EXTRA_LAYOUT_SPACE_PORTRAIT = 1000;
-        private static final int EXTRA_LAYOUT_SPACE_LANDSCAPE = 2000;
-        private Context mContext;
-
-        public CustomGridLayoutManager(final Context context, final int spanCount) {
-            super(context, spanCount);
-            init(context);
-        }
-
-        @Override
-        protected int getExtraLayoutSpace(final RecyclerView.State state) {
-            if (Utils.isLandscape(mContext)) {
-                return EXTRA_LAYOUT_SPACE_LANDSCAPE;
-            }
-            return EXTRA_LAYOUT_SPACE_PORTRAIT;
-        }
-
-        private void init(Context context) {
-            mContext = context;
-        }
-    }
+    //endregion
 }
