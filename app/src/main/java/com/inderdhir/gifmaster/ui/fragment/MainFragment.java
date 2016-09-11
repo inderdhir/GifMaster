@@ -45,7 +45,8 @@ import retrofit2.Response;
 
 
 public class MainFragment extends BaseFragment implements Callback<List<GifItem>>,
-        SwipeRefreshLayout.OnRefreshListener, TextView.OnEditorActionListener {
+        SwipeRefreshLayout.OnRefreshListener, TextView.OnEditorActionListener,
+        View.OnClickListener {
 
     @Inject
     GiphyRetrofitService service;
@@ -54,6 +55,8 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     ViewGroup mNetworkErrorLayout;
     @BindView(R.id.network_error_gif_view)
     SimpleDraweeView mNetworkErrorGifView;
+    @BindView(R.id.back_to_top_text)
+    TextView mBackToTopText;
     @BindView(R.id.swipe_refresh_layout)
     SwipeRefreshLayout mSwipeRefreshLayout;
     @BindView(R.id.search_gifs_edit_text)
@@ -63,6 +66,7 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
 
     private static final int GIF_FETCH_LIMIT = 25;
     private static final int GIF_INFINITE_SCROLL_THRESHOLD = 5;
+    private static final int BACK_TO_TOP_THRESHOLD = 15;
 
     private View rootView;
     private ArrayList<GifItem> mGifItemsList;
@@ -102,6 +106,16 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
                     LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
                     mTotalItems = linearLayoutManager.getItemCount();
                     final int lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
+
+                    // Only available in API >= 21
+                    if (mBackToTopText != null) {
+                        if (lastVisibleItem < BACK_TO_TOP_THRESHOLD) {
+                            mBackToTopText.setVisibility(View.GONE);
+                        } else {
+                            mBackToTopText.setVisibility(View.VISIBLE);
+                        }
+                    }
+
                     if (!isLoadingItems && mTotalItems <= (lastVisibleItem + GIF_INFINITE_SCROLL_THRESHOLD)) {
                         mPreviousItemsTotal += GIF_FETCH_LIMIT;
                         mClearAndLoadNew = false;
@@ -143,6 +157,9 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        if (mBackToTopText != null) {
+            mBackToTopText.setOnClickListener(this);
+        }
         mSwipeRefreshLayout.setOnRefreshListener(this);
         mSearchGifsEditTextView.setOnEditorActionListener(this);
         mGifsRecyclerView.setHasFixedSize(true);
@@ -232,6 +249,13 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     public void onRefresh() {
         mClearAndLoadNew = true;
         makeAppropriateRequest(false);
+    }
+    //endregion
+
+    //region View.OnClickListener
+    @Override
+    public void onClick(final View view) {
+        mGifsRecyclerView.scrollToPosition(0);
     }
     //endregion
 

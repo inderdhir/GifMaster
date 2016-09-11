@@ -1,0 +1,73 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".ui.fragment.MainFragment">
+
+    <include
+        android:id="@+id/network_error_layout"
+        layout="@layout/network_error_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/black"
+        android:orientation="vertical"
+        >
+
+        <EditText
+            android:id="@+id/search_gifs_edit_text"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/search_gifs_edit_text_height"
+            android:background="@color/primary_light"
+            android:freezesText="true"
+            android:hint="@string/search_for_gifs"
+            android:imeOptions="actionSearch"
+            android:inputType="text|textAutoComplete"
+            android:padding="@dimen/default_padding"
+            android:textSize="@dimen/default_text_size"/>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/back_to_top_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_margin="@dimen/default_margin_half"
+                android:background="@color/primary_light"
+                android:drawablePadding="@dimen/default_padding_half"
+                android:drawableStart="@drawable/back_to_top"
+                android:padding="@dimen/row_padding"
+                android:text="@string/back_to_top"
+                android:textSize="@dimen/medium_text_size"
+                android:translationZ="@dimen/back_to_top_z_index"
+                android:visibility="gone"
+                tools:visibility="visible"/>
+
+            <android.support.v4.widget.SwipeRefreshLayout
+                android:id="@+id/swipe_refresh_layout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/gifs_recycler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scrollbars="vertical"/>
+
+            </android.support.v4.widget.SwipeRefreshLayout>
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+</LinearLayout>
