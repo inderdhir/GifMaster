@@ -22,6 +22,7 @@ import java.util.List;
 
 public class GifsRecyclerViewAdapter extends RecyclerView.Adapter<GifsRecyclerViewAdapter.ViewHolder> {
 
+
     private List<GifItem> mGifItems;
     private Context mContext;
 

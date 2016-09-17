@@ -70,6 +70,7 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     RecyclerView mGifsRecyclerView;
 
     private static final int GIF_FETCH_LIMIT = 25;
+    private static final int MAX_GIF_ITEMS = 200;
     private static final int GIF_INFINITE_SCROLL_THRESHOLD = 5;
     private static final int BACK_TO_TOP_THRESHOLD = 15;
 
@@ -318,17 +319,18 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
                 mGifItemsList.clear();
                 mGifsRecyclerView.scrollToPosition(0);
             }
-
-            isLoadingItems = true;
-            if (isSearching && !StringUtils.isNullOrEmpty(mCurrentSearchQuery)) {
-                currentGifsRequest = service.searchForGifs(mCurrentSearchQuery,
-                        GIF_FETCH_LIMIT, mPreviousItemsTotal);
-                currentGifsRequest.enqueue(this);
-            } else {
-                isSearching = false;
-                Utils.hideSoftKeyboard(getActivity(), rootView);
-                currentGifsRequest = service.getTrendingGifs(GIF_FETCH_LIMIT, mPreviousItemsTotal);
-                currentGifsRequest.enqueue(this);
+            if (mGifItemsList.size() + GIF_FETCH_LIMIT <= MAX_GIF_ITEMS) {
+                isLoadingItems = true;
+                if (isSearching && !StringUtils.isNullOrEmpty(mCurrentSearchQuery)) {
+                    currentGifsRequest = service.searchForGifs(mCurrentSearchQuery,
+                            GIF_FETCH_LIMIT, mPreviousItemsTotal);
+                    currentGifsRequest.enqueue(this);
+                } else {
+                    isSearching = false;
+                    Utils.hideSoftKeyboard(getActivity(), rootView);
+                    currentGifsRequest = service.getTrendingGifs(GIF_FETCH_LIMIT, mPreviousItemsTotal);
+                    currentGifsRequest.enqueue(this);
+                }
             }
         } else {
             mSwipeRefreshLayout.setRefreshing(false);
