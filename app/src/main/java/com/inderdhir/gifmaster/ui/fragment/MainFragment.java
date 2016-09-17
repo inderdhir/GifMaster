@@ -7,12 +7,15 @@ import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.facebook.drawee.backends.pipeline.Fresco;
@@ -46,7 +49,7 @@ import retrofit2.Response;
 
 public class MainFragment extends BaseFragment implements Callback<List<GifItem>>,
         SwipeRefreshLayout.OnRefreshListener, TextView.OnEditorActionListener,
-        View.OnClickListener {
+        View.OnClickListener, TextWatcher {
 
     @Inject
     GiphyRetrofitService service;
@@ -55,6 +58,8 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
     ViewGroup mNetworkErrorLayout;
     @BindView(R.id.network_error_gif_view)
     SimpleDraweeView mNetworkErrorGifView;
+    @BindView(R.id.clear_image)
+    ImageView mClearImage;
     @BindView(R.id.back_to_top_text)
     TextView mBackToTopText;
     @BindView(R.id.swipe_refresh_layout)
@@ -170,6 +175,7 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
         adapter = new GifsRecyclerViewAdapter(getContext(), mGifItemsList);
         mGifsRecyclerView.setAdapter(adapter);
         mGifsRecyclerView.addOnScrollListener(mScrollListener);
+        mSearchGifsEditTextView.addTextChangedListener(this);
     }
 
     @Override
@@ -271,6 +277,35 @@ public class MainFragment extends BaseFragment implements Callback<List<GifItem>
             return true;
         }
         return false;
+    }
+
+    @OnClick(R.id.clear_image)
+    public void clearClicked() {
+        mSearchGifsEditTextView.setText("");
+        isSearching = false;
+        mClearAndLoadNew = true;
+        makeAppropriateRequest(false);
+    }
+    //endregion
+
+    //region TextWatcher
+    @Override
+    public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+    }
+
+    @Override
+    public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        if (StringUtils.isNullOrEmpty(charSequence.toString())) {
+            mClearImage.setVisibility(View.GONE);
+        } else {
+            mClearImage.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void afterTextChanged(Editable editable) {
+
     }
     //endregion
 

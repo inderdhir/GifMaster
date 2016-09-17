@@ -10,5 +10,6 @@
     <!-- Content Descriptions -->
     <string name="gif_item">GIF</string>
     <string name="back_to_top">Back to top</string>
+    <string name="cd.delete">Delete</string>
 
 </resources>

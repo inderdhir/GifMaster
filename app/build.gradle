@@ -47,8 +47,8 @@ dependencies {
     compile "com.google.dagger:dagger:2.4"
     apt "com.google.dagger:dagger-compiler:2.4"
 
-//    debugCompile 'com.squareup.leakcanary:leakcanary-android:1.4-beta2'
-//    testCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.4-beta2'
+    debugCompile 'com.squareup.leakcanary:leakcanary-android:1.4'
+    testCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.4'
 
     // Gif support
     compile 'com.facebook.fresco:fresco:0.13.0'

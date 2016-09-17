@@ -26,4 +26,6 @@
     <dimen name="gif_error_height">200dp</dimen>
     <dimen name="retry_button_width">200dp</dimen>
     <dimen name="gif_item_margin">5dp</dimen>
+    <dimen name="delete_icon_width">40dp</dimen>
+    <dimen name="delete_icon_height">30dp</dimen>
 </resources>

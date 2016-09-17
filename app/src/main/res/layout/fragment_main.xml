@@ -1,5 +1,4 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -11,27 +10,42 @@
         layout="@layout/network_error_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone"
-        />
+        android:visibility="gone" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/black"
-        android:orientation="vertical"
-        >
+        android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/search_gifs_edit_text"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/search_gifs_edit_text_height"
-            android:background="@color/primary_light"
-            android:freezesText="true"
-            android:hint="@string/search_for_gifs"
-            android:imeOptions="actionSearch"
-            android:inputType="text|textAutoComplete"
-            android:padding="@dimen/default_padding"
-            android:textSize="@dimen/default_text_size"/>
+            android:layout_height="@dimen/search_gifs_edit_text_height">
+
+            <EditText
+                android:id="@+id/search_gifs_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/search_gifs_edit_text_height"
+                android:background="@color/primary_light"
+                android:freezesText="true"
+                android:hint="@string/search_for_gifs"
+                android:imeOptions="actionSearch"
+                android:inputType="text|textAutoComplete"
+                android:padding="@dimen/default_padding"
+                android:textSize="@dimen/default_text_size" />
+
+            <ImageView
+                android:id="@+id/clear_image"
+                android:layout_width="@dimen/delete_icon_width"
+                android:layout_height="@dimen/delete_icon_height"
+                android:layout_gravity="center_vertical|end"
+                android:contentDescription="@string/cd.delete"
+                android:padding="@dimen/row_padding"
+                android:src="@drawable/ic_delete"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+        </FrameLayout>
 
         <android.support.v4.widget.SwipeRefreshLayout
             android:id="@+id/swipe_refresh_layout"
@@ -42,7 +56,7 @@
                 android:id="@+id/gifs_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scrollbars="vertical"/>
+                android:scrollbars="vertical" />
 
         </android.support.v4.widget.SwipeRefreshLayout>
 
