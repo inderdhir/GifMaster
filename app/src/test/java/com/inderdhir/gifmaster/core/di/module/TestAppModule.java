@@ -1,6 +1,7 @@
 package com.inderdhir.gifmaster.core.di.module;
 
 import com.inderdhir.gifmaster.core.GifMasterApplication;
+import com.inderdhir.gifmaster.core.TestApplication;
 
 import javax.inject.Singleton;
 
@@ -8,14 +9,9 @@ import dagger.Module;
 import dagger.Provides;
 
 @Module
-public class AppModule {
+public class TestAppModule extends AppModule {
 
-    protected GifMasterApplication mApplication;
-
-    public AppModule() {
-    }
-
-    public AppModule(GifMasterApplication mApplication) {
+    public TestAppModule(TestApplication mApplication) {
         this.mApplication = mApplication;
     }
 
@@ -25,4 +21,3 @@ public class AppModule {
         return mApplication;
     }
 }
-

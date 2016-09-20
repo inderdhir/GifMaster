@@ -34,7 +34,10 @@ dependencies {
     compile "com.android.support:appcompat-v7:$supportLibraryVersion"
     compile "com.android.support:design:$supportLibraryVersion"
 
-    compile 'com.squareup.retrofit2:retrofit:2.1.0'
+    compile ('com.squareup.retrofit2:retrofit:2.1.0') {
+        exclude module: 'okhttp'
+    }
+    compile 'com.squareup.okhttp3:okhttp:3.4.1'
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
     compile 'com.squareup.okhttp3:logging-interceptor:3.3.1'
     compile 'com.jakewharton:butterknife:8.4.0'
@@ -53,4 +56,9 @@ dependencies {
     // Gif support
     compile 'com.facebook.fresco:fresco:0.13.0'
     compile 'com.facebook.fresco:animated-gif:0.13.0'
+
+    // Testing
+    testCompile "org.robolectric:robolectric:3.2-SNAPSHOT"
+    testCompile "org.robolectric:shadows-support-v4:3.0"
+    testCompile "org.mockito:mockito-core:1.10.19"
 }

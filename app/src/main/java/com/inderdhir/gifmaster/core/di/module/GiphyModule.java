@@ -29,13 +29,13 @@ public class GiphyModule {
 
     @Provides
     @Singleton
-    GiphyRetrofitService provideGiphyService(Retrofit retrofit) {
+    protected GiphyRetrofitService provideGiphyService(Retrofit retrofit) {
         return retrofit.create(GiphyRetrofitService.class);
     }
 
     @Provides
     @Singleton
-    GsonConverterFactory provideGsonConverterFactory() {
+    protected GsonConverterFactory provideGsonConverterFactory() {
         GsonBuilder gsonBuilder = new GsonBuilder();
 
         // Adding custom deserializers

@@ -18,16 +18,12 @@ import static android.os.Build.VERSION_CODES.GINGERBREAD;
 
 public class GifMasterApplication extends Application {
 
-    private ApplicationComponent applicationComponent;
+    protected ApplicationComponent applicationComponent;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        applicationComponent = DaggerApplicationComponent.builder()
-                .appModule(new AppModule(this))
-                .networkModule(new NetworkModule())
-                .giphyModule(new GiphyModule())
-                .build();
+        initDagger();
 
         Fresco.initialize(this);
         if (BuildConfig.DEBUG) {
@@ -38,6 +34,14 @@ public class GifMasterApplication extends Application {
 
     public ApplicationComponent component() {
         return applicationComponent;
+    }
+
+    protected void initDagger(){
+        applicationComponent = DaggerApplicationComponent.builder()
+                .appModule(new AppModule(this))
+                .networkModule(new NetworkModule())
+                .giphyModule(new GiphyModule())
+                .build();
     }
 
     private void enabledStrictMode() {

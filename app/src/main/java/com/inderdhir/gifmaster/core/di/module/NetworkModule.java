@@ -29,11 +29,11 @@ public class NetworkModule {
 
     private static final String DEBUG_PROPERTIES_FILENAME = "config.debug.properties";
     private static final String RELEASE_PROPERTIES_FILENAME = "config.release.properties";
-    private static final int OKHTTP_CACHE_SIZE = 10 * 1024 * 1024; // 10 MiB
+    protected static final int OKHTTP_CACHE_SIZE = 10 * 1024 * 1024; // 10 MiB
 
     // Properties
     private static final String API_KEY = "api_key";
-    private static final String BASE_URL = "base_url";
+    protected static final String BASE_URL = "base_url";
 
 
     public NetworkModule() {
@@ -41,13 +41,13 @@ public class NetworkModule {
 
     @Provides
     @Singleton
-    Cache provideCache(GifMasterApplication application) {
+    protected Cache provideCache(GifMasterApplication application) {
         return new Cache(application.getCacheDir(), OKHTTP_CACHE_SIZE);
     }
 
     @Provides
     @Singleton
-    public OkHttpClient provideOkHttpClient(final Properties properties,
+    protected OkHttpClient provideOkHttpClient(final Properties properties,
                                             final Cache cache,
                                             final GifMasterApplication application) {
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
@@ -84,7 +84,7 @@ public class NetworkModule {
 
     @Provides
     @Singleton
-    public Retrofit provideRetrofit(Properties properties, OkHttpClient httpClient,
+    protected Retrofit provideRetrofit(Properties properties, OkHttpClient httpClient,
                                     GsonConverterFactory factory) {
         Retrofit.Builder builder =
                 new Retrofit.Builder()
@@ -98,7 +98,7 @@ public class NetworkModule {
 
     @Provides
     @Singleton
-    public Properties provideProperties(GifMasterApplication application) {
+    protected Properties provideProperties(GifMasterApplication application) {
         final Properties properties = new Properties();
         final AssetManager assetManager = application.getAssets();
         try {
